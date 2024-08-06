@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
+import 'package:note_app/utils/app_sessions.dart';
 
 import 'package:note_app/utils/color_constants.dart';
 import 'package:note_app/view/dummydb.dart';
@@ -14,7 +17,19 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController titlecontroller = TextEditingController();
   final TextEditingController descriptioncontroller = TextEditingController();
+  final TextEditingController datecontroller = TextEditingController();
   int selectedColorIndex = 0;
+  var notebox = Hive.box(AppSessions.NOTEBOX);
+
+  List notekeys =
+      []; //we cannot directly give notebox into this list so create a initstate and give inside it
+  @override
+  void initState() {
+    notekeys = notebox.keys.toList();
+    setState(() {});
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,29 +37,32 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: ListView.separated(
             padding: EdgeInsets.all(16),
-            itemBuilder: (context, index) => NotesCard(
-                  notecolor: Dummydb
-                      .notescolor[Dummydb.notesList[index]["colorIndex"]],
-                  onDelete: () {
-                    Dummydb.notesList.removeAt(index);
-                    setState(() {});
-                  },
-                  onEdit: () {
-                    titlecontroller.text =
-                        Dummydb.notesList[index]["title"].toString();
-                    descriptioncontroller.text =
-                        Dummydb.notesList[index]["description"].toString();
-                    selectedColorIndex = Dummydb.notesList[index]["colorIndex"];
-                    _buildBottomSheet(context, isEdit: true, itemIndex: index);
-                  },
-                  titledata: Dummydb.notesList[index]["title"].toString(),
-                  contentdata:
-                      Dummydb.notesList[index]["description"].toString(),
-                ),
+            itemBuilder: (context, index) {
+              var currentnote = notebox.get(notekeys[index]);
+              return NotesCard(
+                date: currentnote["date"],
+                notecolor: Dummydb.notescolor[currentnote["colorIndex"]],
+                titledata: currentnote["title"],
+                contentdata: currentnote["description"],
+                onDelete: () {
+                  notebox.delete(notekeys[index]);
+                  notekeys = notebox.keys.toList();
+                  setState(() {});
+                },
+                onEdit: () {
+                  titlecontroller.text = currentnote["title"];
+                  datecontroller.text = currentnote["date"];
+
+                  descriptioncontroller.text = currentnote["description"];
+                  selectedColorIndex = currentnote["colorIndex"];
+                  _buildBottomSheet(context, isEdit: true, itemIndex: index);
+                },
+              );
+            },
             separatorBuilder: (context, index) => SizedBox(
                   height: 20,
                 ),
-            itemCount: Dummydb.notesList.length),
+            itemCount: notekeys.length),
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
@@ -52,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () {
           descriptioncontroller.clear(); //to clear value after entering once
           titlecontroller.clear();
+          datecontroller.clear();
           selectedColorIndex = 0;
           _buildBottomSheet(context);
         },
@@ -97,7 +116,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 20,
               ),
               TextField(
+                controller: datecontroller,
+                readOnly: true, //if true cannot type into the textfield
                 decoration: InputDecoration(
+                    suffixIcon: IconButton(
+                        onPressed: () async {
+                          var selectedDate = await showDatePicker(
+                              context: context,
+                              firstDate: DateTime(2024),
+                              lastDate: DateTime.now());
+                          if (selectedDate != null) {
+                            datecontroller.text =
+                                DateFormat("dd MMMM y").format(selectedDate!);
+                          }
+                        },
+                        icon: Icon(Icons.calendar_month_outlined)),
                     hintText: "Date",
                     fillColor: ColorConstants.lightblue,
                     filled: true,
@@ -163,18 +196,22 @@ class _HomeScreenState extends State<HomeScreen> {
                               borderRadius: BorderRadius.circular(7)))),
                       onPressed: () {
                         isEdit
-                            ? Dummydb.notesList[itemIndex!] = {
+                            ? notebox.put(notekeys[itemIndex!], {
                                 "title": titlecontroller.text,
                                 "description": descriptioncontroller.text,
-                                "colorIndex": selectedColorIndex
-                              }
-                            : Dummydb.notesList.add({
+                                "colorIndex": selectedColorIndex,
+                                "date": datecontroller.text,
+                              })
+                            //to add new note to hive storage
+                            : notebox.add({
                                 "title": titlecontroller.text,
                                 "description": descriptioncontroller.text,
-                                "colorIndex": selectedColorIndex
+                                "colorIndex": selectedColorIndex,
+                                "date": datecontroller.text,
                               });
                         Navigator.pop(context);
-
+                        notekeys = notebox.keys
+                            .toList(); //to update the keys list after adding a note
                         setState(() {});
                       },
                       child: Text(isEdit ? "Update" : "Save",

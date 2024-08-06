@@ -11,9 +11,12 @@ class NotesCard extends StatelessWidget {
     this.onDelete,
     this.onEdit,
     required this.notecolor,
+    required this.date,
   });
   final String titledata;
   final String contentdata;
+  final String date;
+
   final void Function()? onDelete;
   final void Function()? onEdit;
   final Color notecolor;
@@ -73,7 +76,7 @@ class NotesCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Spacer(),
-                  Text("Tue, Feb 20, 2024",
+                  Text(date,
                       maxLines: 4,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
