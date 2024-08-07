@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:note_app/utils/app_sessions.dart';
 import 'package:note_app/utils/color_constants.dart';
 import 'package:note_app/view/notes_screen/notes_screen.dart';
 import 'package:share_plus/share_plus.dart';
 
-class NotesCard extends StatelessWidget {
+class NotesCard extends StatefulWidget {
   const NotesCard({
     super.key,
     required this.titledata,
@@ -20,6 +22,26 @@ class NotesCard extends StatelessWidget {
   final void Function()? onDelete;
   final void Function()? onEdit;
   final Color notecolor;
+
+  @override
+  State<NotesCard> createState() => _NotesCardState();
+}
+
+class _NotesCardState extends State<NotesCard> {
+  //  final TextEditingController titlecontroller = TextEditingController();
+  // final TextEditingController descriptioncontroller = TextEditingController();
+  // final TextEditingController datecontroller = TextEditingController();
+  //  int selectedColorIndex = 0;
+  //  var notebox = Hive.box(AppSessions.NOTEBOX);
+
+  // List notekeys =
+  //     []; //we cannot directly give notebox into this list so create a initstate and give inside it
+  // @override
+  // void initState() {
+  //   notekeys = notebox.keys.toList();
+  //   setState(() {});
+  //   super.initState();
+  // }
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -27,12 +49,24 @@ class NotesCard extends StatelessWidget {
         Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => NotesScreen(),
+              builder: (context) => NotesScreen(
+                content: widget.contentdata,
+                title: widget.titledata,
+                color: widget.notecolor,
+                // edit:  () {
+                //   titlecontroller.text = currentnote["title"];
+                //   datecontroller.text = currentnote["date"];
+
+                //   descriptioncontroller.text = currentnote["description"];
+                //   selectedColorIndex = currentnote["colorIndex"];
+                //   _buildBottomSheet(context, isEdit: true, itemIndex: index);
+                // },,
+              ),
             ));
       },
       child: Container(
         decoration: BoxDecoration(
-          color: notecolor,
+          color: widget.notecolor,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Padding(
@@ -43,7 +77,7 @@ class NotesCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    titledata,
+                    widget.titledata,
                     style: TextStyle(
                         color: ColorConstants.mainblack,
                         fontSize: 26,
@@ -51,13 +85,13 @@ class NotesCard extends StatelessWidget {
                   ),
                   Spacer(),
                   IconButton(
-                      onPressed: onEdit,
+                      onPressed: widget.onEdit,
                       icon: Icon(
                         Icons.edit,
                         color: ColorConstants.mainblack,
                       )),
                   IconButton(
-                      onPressed: onDelete,
+                      onPressed: widget.onDelete,
                       icon: Icon(
                         Icons.delete,
                         color: ColorConstants.mainblack,
@@ -67,7 +101,9 @@ class NotesCard extends StatelessWidget {
               SizedBox(
                 height: 20,
               ),
-              Text(contentdata,
+              Text(widget.contentdata,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: ColorConstants.mainblack,
                     fontSize: 20,
@@ -76,9 +112,7 @@ class NotesCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Spacer(),
-                  Text(date,
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
+                  Text(widget.date,
                       style: TextStyle(
                         color: ColorConstants.mainblack,
                         fontSize: 16,
@@ -88,7 +122,8 @@ class NotesCard extends StatelessWidget {
                   ),
                   IconButton(
                       onPressed: () {
-                        Share.share("$titledata \n$contentdata ");
+                        Share.share(
+                            "${widget.titledata} \n${widget.contentdata} ");
                       },
                       icon: Icon(
                         Icons.share,

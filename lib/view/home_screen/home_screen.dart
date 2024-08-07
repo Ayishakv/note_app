@@ -38,17 +38,20 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView.separated(
             padding: EdgeInsets.all(16),
             itemBuilder: (context, index) {
+              //hive implement
               var currentnote = notebox.get(notekeys[index]);
               return NotesCard(
                 date: currentnote["date"],
                 notecolor: Dummydb.notescolor[currentnote["colorIndex"]],
                 titledata: currentnote["title"],
                 contentdata: currentnote["description"],
+                //to delete
                 onDelete: () {
                   notebox.delete(notekeys[index]);
                   notekeys = notebox.keys.toList();
                   setState(() {});
                 },
+                //to edit
                 onEdit: () {
                   titlecontroller.text = currentnote["title"];
                   datecontroller.text = currentnote["date"];
